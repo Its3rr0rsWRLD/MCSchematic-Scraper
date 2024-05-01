@@ -15,7 +15,7 @@ Before you begin, ensure you have met the following requirements:
 Clone the repository to your local machine:
 
 ```bash
-git clone https://github.com/yourusername/MCSchematic-Scraper.git
+git clone https://github.com/its3rr0rswrld/MCSchematic-Scraper.git
 cd MCSchematic-Scraper
 ```
 
