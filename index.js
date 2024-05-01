@@ -21,22 +21,41 @@ const cookies = {
     utoken: dotenv.utoken
 }
 
-async function getSchematics() {
-  try {
-    const response = await axios.get(`${baseURL}/top-rated/`);
-    const $ = cheerio.load(response.data);
-    const links = $("a[href*='/schematic/']");
+let totalSchematics = 0;
+let totalSkipped = 0;
 
-    for (let i = 0; i < links.length; i++) {
-      const link = $(links[i]).attr('href');
-      const schematicId = link.split('/schematic/')[1];
-      if (schematicId && schematicId.match(/^[0-9]+\/$/)) {
-        await getSchematicDetails(schematicId);
-      }
+async function getSchematics() {
+    try {
+        let realPage = 1;
+        let linkPage = '';
+        let hasSchematics = true;
+
+        while (hasSchematics) {
+            if (realPage === 1) {
+                linkPage = '';
+            } else {
+                linkPage = realPage;
+            }
+            const response = await axios.get(`${baseURL}/top-rated/${linkPage}/`);
+            const $ = cheerio.load(response.data);
+            const links = $("a[href*='/schematic/']");
+
+            if (links.length === 0) {
+                hasSchematics = false;
+            } else {
+                for (let i = 0; i < links.length; i++) {
+                    const link = $(links[i]).attr('href');
+                    const schematicId = link.split('/schematic/')[1];
+                    if (schematicId && schematicId.match(/^[0-9]+\/$/)) {
+                        await getSchematicDetails(schematicId);
+                    }
+                }
+                realPage++;
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching schematics:', error);
     }
-  } catch (error) {
-    console.error('Error fetching schematics:', error);
-  }
 }
 
 async function getSchematicDetails(schematicId) {
@@ -57,7 +76,6 @@ async function getSchematicDetails(schematicId) {
 async function downloadSchematic(schematicId, schematicName) {
     schematicId = schematicId.replace(/\D/g, ''); // Remove the / to prevent path traversal
     const downloadUrl = `${baseURL}/schematic/${schematicId}/download/`;
-    console.log(`Download URL: ${downloadUrl}`);
     try {
         const response = await axios({
             method: 'get',
@@ -87,14 +105,14 @@ async function downloadSchematic(schematicId, schematicName) {
 
         const files = fs.readdirSync(path.join(__dirname, 'schematics'));
         const existingFiles = files.filter(file => file.includes(schematicId));
-        
+
         if (existingFiles.length > 0) {
-            console.log(`Schematic ID ${schematicId} already downloaded, skipping...`);
+            totalSkipped++;
             return;
         }
 
         fs.writeFileSync(savePath, response.data);
-        console.log(`Downloaded and saved ${fileName}`);
+        totalSchematics++;
     } catch (error) {
         console.error(`Error downloading schematic ID ${schematicId}:`, error);
         if (error.response) {
@@ -104,5 +122,16 @@ async function downloadSchematic(schematicId, schematicName) {
         }
     }
 }
+
+setInterval(() => {
+    const symbols = ['-', '\\', '|', '/'];
+    let index = 0;
+    console.log('');
+    setInterval(() => {
+        process.stdout.write(`\r    [${symbols[index]}] Fetching schematics... ; Total: ${totalSchematics} ; Skipped: ${totalSkipped}`);
+        index = (index + 1) % symbols.length;
+    }, 250);
+    console.clear();
+}, 1000);
 
 getSchematics();
