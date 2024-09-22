@@ -1,5 +1,7 @@
 # MCSchematic-Scraper
 
+> :warning: This is an attempt at scraping schematics, doesn't work, contribute if you would like
+
 MCSchematic-Scraper is a Node.js tool designed to automatically download top-rated Minecraft schematics from the `minecraft-schematics.com` website. It handles the extraction of schematic details and downloads files to the local filesystem, renaming them appropriately to avoid conflicts and ensuring that downloads are managed safely with authentication via cookies.
 
 I made this because I wanted to install a bunch of schematics for my world but it was ***slow*** and it ***didn't*** have the names of the schematic so it was confusing to know what schematic did what. Yeah thats basically it lol
